@@ -17,10 +17,11 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
+#include "error_check_utilities.h"
+#include "timer3_BSP.h"
 #include "usart2_BSP.h"
 #include "i2c1_BSP.h"
-#include <string.h>
+#include "main.h"
 
 
 /* Private includes ----------------------------------------------------------*/
@@ -107,7 +108,6 @@ int main(void)
 
   /* USER CODE BEGIN SysInit */
 
-	__enable_irq();
 
   /* USER CODE END SysInit */
 
@@ -115,19 +115,27 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   I2C1_Init();
-  initUSART2();
-  printMsgNL_USART2("Nucleo Initialized!");
+  check_Error(initUSART2(),__FILE__,__LINE__);
+
+  check_Error(initCounter_Tmr3(1000),__FILE__,__LINE__);
+  check_Error(startCounter_Tmr3(),__FILE__,__LINE__);
+
+  check_Error(printMsgNL_USART2("Nucleo Initialized!"),__FILE__,__LINE__);
+
+  __enable_irq();
+
 
   uint8_t transmitData = 3, readData;
   while(1){
 
-	  printMsgNL_USART2("Transmitting: %u\r\n", transmitData);
+	  check_Error(printMsgNL_USART2("Transmitting: %u", transmitData),__FILE__,__LINE__);
 	  I2C1_Transmit(ARDUINO_ADDR, &transmitData,1);
-	  LL_mDelay(10);
+	  check_Error(delayTicks_Tmr3(10),__FILE__,__LINE__);
+
 	  I2C1_Receive(ARDUINO_ADDR, &readData,1);
 
-	  printMsgNL_USART2("Received: %u\r\n", readData);
-	  LL_mDelay(1000);
+	  check_Error(printMsgNL_USART2("Received: %u", readData),__FILE__,__LINE__);
+	  check_Error(delayTicks_Tmr3(1000),__FILE__,__LINE__);
   }
 }
 
