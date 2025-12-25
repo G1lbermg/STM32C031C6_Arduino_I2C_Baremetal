@@ -114,7 +114,7 @@ int main(void)
   /* Initialize all configured peripherals */
   /* USER CODE BEGIN 2 */
 
-  I2C1_Init();
+  check_Error(I2C1_Init(),__FILE__,__LINE__);
   check_Error(initUSART2(),__FILE__,__LINE__);
 
   check_Error(initCounter_Tmr3(1000),__FILE__,__LINE__);
@@ -125,15 +125,14 @@ int main(void)
   __enable_irq();
 
 
-  uint8_t transmitData = 3, readData;
+  uint8_t transmitData = 6, readData;
   while(1){
 
 	  check_Error(printMsgNL_USART2("Transmitting: %u", transmitData),__FILE__,__LINE__);
-	  I2C1_Transmit(ARDUINO_ADDR, &transmitData,1);
+	  check_Error(I2C1_Transmit(ARDUINO_ADDR, &transmitData,1),__FILE__,__LINE__);
 	  check_Error(delayTicks_Tmr3(10),__FILE__,__LINE__);
 
-	  I2C1_Receive(ARDUINO_ADDR, &readData,1);
-
+	  check_Error(I2C1_Receive(ARDUINO_ADDR, &readData,1),__FILE__,__LINE__);
 	  check_Error(printMsgNL_USART2("Received: %u", readData),__FILE__,__LINE__);
 	  check_Error(delayTicks_Tmr3(1000),__FILE__,__LINE__);
   }
