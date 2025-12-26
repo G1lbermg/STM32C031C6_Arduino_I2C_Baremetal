@@ -7,7 +7,7 @@
 #define SCLL_VALUE		0x13U
 
 
-ErrorCode_t I2C1_Init(void)
+ErrorCode_t initCTRL_I2C1(void)
 {
 	/***********SCL & SDA Pin SETUP ***********/
 
@@ -54,20 +54,19 @@ ErrorCode_t I2C1_Init(void)
 	return E_OK;
 }
 
-ErrorCode_t I2C1_Transmit(uint8_t address, uint8_t *transmitBuffer, uint8_t size)
+ErrorCode_t transmitCTRL_I2C1(uint8_t address, uint8_t *transmitBuffer, uint8_t size)
 {
 	//Check for NULL Pointer
 	if(transmitBuffer == 0)
 		return E_INVALID_ARGUMENT;
 
-    // ... (No change required for I2C1_Transmit) ...
     // 1. Wait for Bus to be Idle
     while(I2C1->ISR & I2C_ISR_BUSY);
 
     // 2. Clear the CR2 register
     I2C1->CR2 = 0;
 
-    // 3. Configure CR2 for the packet (Write Direction is 0/Default)
+    // 3. Configure CR2 for the packet (Write Direction is 0)
     uint32_t tmpreg = 0;
     // CRITICAL: Shift Address Left by 1
     tmpreg |= ((address << 1) & I2C_CR2_SADD);
@@ -81,15 +80,15 @@ ErrorCode_t I2C1_Transmit(uint8_t address, uint8_t *transmitBuffer, uint8_t size
     // 5. Transmit Loop
     for(int i = 0; i < size; i++)
     {
-        // Wait for TXIS (Transmit Interrupt Status), checking for errors
+        // Wait for TXIS (Transmit Interrupt Status) and check for errors
         while( !(I2C1->ISR & I2C_ISR_TXIS) )
         {
             // Check for NACK (Address or Data NACK'd)
             if(I2C1->ISR & I2C_ISR_NACKF)
             {
+            	// NACK Received (Peripheral failed to respond)
                 SET_BIT(I2C1->ICR, I2C_ICR_NACKCF);
-                // Exit immediately upon failure
-                return E_I2C_NACK_RECEIVED;
+                return E_I2C_ACK_FAILED;
             }
         }
 
@@ -107,7 +106,7 @@ ErrorCode_t I2C1_Transmit(uint8_t address, uint8_t *transmitBuffer, uint8_t size
 }
 
 
-ErrorCode_t I2C1_Receive(uint8_t address, uint8_t *readBuffer, uint8_t size)
+ErrorCode_t receiveCTRL_I2C1(uint8_t address, uint8_t *readBuffer, uint8_t size)
 {
 	//Check for NULL Pointer
 	if(readBuffer == 0)
@@ -117,7 +116,7 @@ ErrorCode_t I2C1_Receive(uint8_t address, uint8_t *readBuffer, uint8_t size)
 	 while(I2C1->ISR & I2C_ISR_BUSY)
 		 ;
 
-	    // 2. Clear the CR2 register
+	 // 2. Clear the CR2 register
 	 I2C1->CR2 &= ~((uint32_t)(I2C_CR2_SADD  |
 	    						I2C_CR2_NBYTES  |
 								I2C_CR2_RELOAD  |
@@ -145,13 +144,13 @@ ErrorCode_t I2C1_Receive(uint8_t address, uint8_t *readBuffer, uint8_t size)
 
 	 // 5. Loop to receive data
 	 for(int i = 0; i < size; i++){
-		 // Wait for RXNE, checking for errors
+		 // Wait for RXNE and check for errors
 		 while(!(I2C1->ISR & I2C_ISR_RXNE)){
 			 if(I2C1->ISR & I2C_ISR_NACKF){
-				 // NACK Received (Slave failed to respond)
-	    	     SET_BIT(I2C1->ICR, I2C_ICR_NACKCF);
 
-	    	     return E_I2C_NACK_RECEIVED; // Abort receive
+				 // NACK Received (Peripheral failed to respond)
+	    	     SET_BIT(I2C1->ICR, I2C_ICR_NACKCF);
+	    	     return E_I2C_ACK_FAILED; // Abort receive
 	    	 }
 	    }
 

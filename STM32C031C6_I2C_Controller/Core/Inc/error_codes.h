@@ -37,7 +37,7 @@ typedef enum
 	E_USART_BUFFER_OVERFLOW       = -305,   // Formatted message was truncated due to buffer size (128 bytes)
 
 	E_I2C_INIT_FAILED             = -306,   // General failure during I2C peripheral initialization
-	E_I2C_NACK_RECEIVED           = -307,   // Received NACK when expecting response
+	E_I2C_ACK_FAILED           	  = -307,   // Received NACK when expecting response
 
 	// --- 4. Timer Errors (-400 to -499) ---
 	E_TIMER_INIT_FAILED           = -401,   // General failure during TIMER peripheral initialization

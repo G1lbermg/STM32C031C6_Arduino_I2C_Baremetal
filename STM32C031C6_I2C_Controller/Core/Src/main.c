@@ -114,7 +114,7 @@ int main(void)
   /* Initialize all configured peripherals */
   /* USER CODE BEGIN 2 */
 
-  check_Error(I2C1_Init(),__FILE__,__LINE__);
+  check_Error(initCTRL_I2C1(),__FILE__,__LINE__);
   check_Error(initUSART2(),__FILE__,__LINE__);
 
   check_Error(initCounter_Tmr3(1000),__FILE__,__LINE__);
@@ -125,14 +125,14 @@ int main(void)
   __enable_irq();
 
 
-  uint8_t transmitData = 6, readData;
+  uint8_t transmitData = 2, readData;
   while(1){
 
 	  check_Error(printMsgNL_USART2("Transmitting: %u", transmitData),__FILE__,__LINE__);
-	  check_Error(I2C1_Transmit(ARDUINO_ADDR, &transmitData,1),__FILE__,__LINE__);
+	  check_Error(transmitCTRL_I2C1(ARDUINO_ADDR, &transmitData,1),__FILE__,__LINE__);
 	  check_Error(delayTicks_Tmr3(10),__FILE__,__LINE__);
 
-	  check_Error(I2C1_Receive(ARDUINO_ADDR, &readData,1),__FILE__,__LINE__);
+	  check_Error(receiveCTRL_I2C1(ARDUINO_ADDR, &readData,1),__FILE__,__LINE__);
 	  check_Error(printMsgNL_USART2("Received: %u", readData),__FILE__,__LINE__);
 	  check_Error(delayTicks_Tmr3(1000),__FILE__,__LINE__);
   }
@@ -182,10 +182,7 @@ void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1)
-  {
-  }
+	Central_Error_Handler(E_ERROR_GENERIC, __FILE__, __LINE__);
   /* USER CODE END Error_Handler_Debug */
 }
 #ifdef USE_FULL_ASSERT
