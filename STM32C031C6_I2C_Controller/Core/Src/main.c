@@ -125,7 +125,7 @@ int main(void)
   __enable_irq();
 
 
-  uint8_t transmitData = 2, readData;
+  uint8_t transmitData = 3, readData;
   while(1){
 
 	  check_Error(printMsgNL_USART2("Transmitting: %u", transmitData),__FILE__,__LINE__);
