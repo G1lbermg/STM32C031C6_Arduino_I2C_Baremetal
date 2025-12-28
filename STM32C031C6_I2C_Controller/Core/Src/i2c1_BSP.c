@@ -1,13 +1,13 @@
 #include "i2c1_BSP.h"
 
-#define PRESC_VALUE	0xBU
+#define PRESC_VALUE		0xBU
 #define SCLDEL_VALUE	0x4U
 #define SDADEL_VALUE	0x2U
-#define SCLH_VALUE	0xFU
-#define SCLL_VALUE	0x13U
+#define SCLH_VALUE		0xFU
+#define SCLL_VALUE		0x13U
 
 
-void I2C1_Init(void)
+ErrorCode_t initCTRL_I2C1(void)
 {
 	/***********SCL & SDA Pin SETUP ***********/
 
@@ -50,18 +50,23 @@ void I2C1_Init(void)
 
 	//Enable PE BIT
 	SET_BIT(I2C1->CR1, I2C_CR1_PE);
+
+	return E_OK;
 }
 
-void I2C1_Transmit(uint8_t address, uint8_t *transmitBuffer, uint8_t size)
+ErrorCode_t transmitCTRL_I2C1(uint8_t address, uint8_t *transmitBuffer, uint8_t size)
 {
-    // ... (No change required for I2C1_Transmit) ...
+	//Check for NULL Pointer
+	if(transmitBuffer == 0)
+		return E_INVALID_ARGUMENT;
+
     // 1. Wait for Bus to be Idle
     while(I2C1->ISR & I2C_ISR_BUSY);
 
     // 2. Clear the CR2 register
     I2C1->CR2 = 0;
 
-    // 3. Configure CR2 for the packet (Write Direction is 0/Default)
+    // 3. Configure CR2 for the packet (Write Direction is 0)
     uint32_t tmpreg = 0;
     // CRITICAL: Shift Address Left by 1
     tmpreg |= ((address << 1) & I2C_CR2_SADD);
@@ -75,15 +80,15 @@ void I2C1_Transmit(uint8_t address, uint8_t *transmitBuffer, uint8_t size)
     // 5. Transmit Loop
     for(int i = 0; i < size; i++)
     {
-        // Wait for TXIS (Transmit Interrupt Status), checking for errors
+        // Wait for TXIS (Transmit Interrupt Status) and check for errors
         while( !(I2C1->ISR & I2C_ISR_TXIS) )
         {
             // Check for NACK (Address or Data NACK'd)
             if(I2C1->ISR & I2C_ISR_NACKF)
             {
+            	// NACK Received (Peripheral failed to respond)
                 SET_BIT(I2C1->ICR, I2C_ICR_NACKCF);
-                // Exit immediately upon failure
-                return;
+                return E_I2C_ACK_FAILED;
             }
         }
 
@@ -96,16 +101,23 @@ void I2C1_Transmit(uint8_t address, uint8_t *transmitBuffer, uint8_t size)
 
     // 7. Clear STOP flag
     SET_BIT(I2C1->ICR, I2C_ICR_STOPCF);
+
+    return E_OK;
 }
 
 
-void I2C1_Receive(uint8_t address, uint8_t *readBuffer, uint8_t size)
+ErrorCode_t receiveCTRL_I2C1(uint8_t address, uint8_t *readBuffer, uint8_t size)
 {
-	 // 1. Ensure the bus is ready (not busy)
-	    while(I2C1->ISR & I2C_ISR_BUSY);
+	//Check for NULL Pointer
+	if(readBuffer == 0)
+		return E_INVALID_ARGUMENT;
 
-	    // 2. Clear the CR2 register
-	    I2C1->CR2 &= ~((uint32_t)(I2C_CR2_SADD  |
+	 // 1. Ensure the bus is ready (not busy)
+	 while(I2C1->ISR & I2C_ISR_BUSY)
+		 ;
+
+	 // 2. Clear the CR2 register
+	 I2C1->CR2 &= ~((uint32_t)(I2C_CR2_SADD  |
 	    						I2C_CR2_NBYTES  |
 								I2C_CR2_RELOAD  |
 								I2C_CR2_AUTOEND |
@@ -113,45 +125,44 @@ void I2C1_Receive(uint8_t address, uint8_t *readBuffer, uint8_t size)
 								I2C_CR2_START   |
 								I2C_CR2_STOP));
 
-	    // 3. Configure CR2 for this specific packet
-	    // Set Address (Shifted), Set NBYTES, Set Read Direction (1)
-	    uint32_t tmpreg = 0;
-	    tmpreg |= ((address << 1) & I2C_CR2_SADD);
-	    tmpreg |= ((size << I2C_CR2_NBYTES_Pos) & I2C_CR2_NBYTES);
-	    tmpreg |= I2C_CR2_RD_WRN;
+	 // 3. Configure CR2 for this specific packet
+	 // Set Address (Shifted), Set NBYTES, Set Read Direction (1)
+	 uint32_t tmpreg = 0;
+	 tmpreg |= ((address << 1) & I2C_CR2_SADD);
+	 tmpreg |= ((size << I2C_CR2_NBYTES_Pos) & I2C_CR2_NBYTES);
+	 tmpreg |= I2C_CR2_RD_WRN;
 
-	    // Optional: Set AUTOEND.
-	    // If set, the hardware automatically generates a STOP after 'size' bytes are sent.
-	    // If you don't set this, you must manually generate STOP later.
-	    tmpreg |= I2C_CR2_AUTOEND;
+	 // Optional: Set AUTOEND.
+	 // If set, the hardware automatically generates a STOP after 'size' bytes are sent.
+	 // If you don't set this, you must manually generate STOP later.
+	 tmpreg |= I2C_CR2_AUTOEND;
 
-	    // 4. Write to CR2 and Generate START
-	    // The hardware will now automatically send: [START] -> [ADDRESS] -> [Wait for ACK]
-	    tmpreg |= I2C_CR2_START;
-	    I2C1->CR2 = tmpreg;
+	 // 4. Write to CR2 and Generate START
+	 // The hardware will now automatically send: [START] -> [ADDRESS] -> [Wait for ACK]
+	 tmpreg |= I2C_CR2_START;
+	 I2C1->CR2 = tmpreg;
 
-	    // 5. Loop to receive data
-	    	 for(int i = 0; i < size; i++)
-	    	 {
-	    	     // Wait for RXNE, checking for errors
-	    	     while(!(I2C1->ISR & I2C_ISR_RXNE))
-	    	     {
-	    	         if(I2C1->ISR & I2C_ISR_NACKF)
-	    	         {
-	    	             // NACK Received (Slave failed to respond)
-	    	             SET_BIT(I2C1->ICR, I2C_ICR_NACKCF);
-	    	             return; // Abort receive
-	    	         }
-	    	     }
+	 // 5. Loop to receive data
+	 for(int i = 0; i < size; i++){
+		 // Wait for RXNE and check for errors
+		 while(!(I2C1->ISR & I2C_ISR_RXNE)){
+			 if(I2C1->ISR & I2C_ISR_NACKF){
 
-	    	     // Read data from RXDR and store in buffer, then advance pointer
-	    	     *readBuffer++ = (uint8_t) (I2C1->RXDR);
+				 // NACK Received (Peripheral failed to respond)
+	    	     SET_BIT(I2C1->ICR, I2C_ICR_NACKCF);
+	    	     return E_I2C_ACK_FAILED; // Abort receive
 	    	 }
+	    }
+
+	    // Read data from RXDR and store in buffer, then advance pointer
+	    *readBuffer++ = (uint8_t) (I2C1->RXDR);
+	 }
 	 // 6. Wait for STOP flag (because we used AUTOEND)
 	 while(!(I2C1->ISR & I2C_ISR_STOPF));
 
 	 // 7. Clear the STOP flag
 	 SET_BIT(I2C1->ICR, I2C_ICR_STOPCF);
 
+	 return E_OK;
 }
 

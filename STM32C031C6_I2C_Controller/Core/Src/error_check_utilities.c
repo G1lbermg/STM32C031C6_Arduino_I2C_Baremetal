@@ -88,7 +88,7 @@ void Central_Error_Handler(ErrorCode_t errorCode, const char *file, int line)
     }
 
     // +++++ POLICY TIER 1: MAJOR/RETRYABLE ERRORS (Log and Continue/Notify) +++++
-    if (errorCode == E_USART_TX_TIMEOUT || errorCode == E_GPIO_INIT_FAILED) {
+    if (errorCode == E_USART_TX_TIMEOUT || errorCode == E_GPIO_INIT_FAILED || E_I2C_ACK_FAILED) {
 
 		#ifdef LOGGING_ENABLE
     	Central_Log_Function("MAJOR ERROR: Code %d at %s,line:%d", errorCode, log_file_ptr, line);
