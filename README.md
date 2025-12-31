@@ -10,11 +10,11 @@ This repository demonstrates a bare-metal C implementation of I2C communication 
 
 ### ⚡ 5V to 3.3V Bi-directional Logic Converter
 * **Nucleo Side (Low Voltage):**
-  * PWR/GND leads connected to **LV** / **GND** respectively.
+  * 3V3/GND leads connected to **LV** / **GND** respectively.
   * SCL (PB8) connected to **LV1**.
   * SDA (PB9) connected to **LV2**.
 * **Arduino Side (High Voltage):**
-  * PWR/GND leads connected to **HV** / **GND** respectively.
+  * 5V/GND leads connected to **HV** / **GND** respectively.
   * SCL (PC5) connected to **HV1**.
   * SDA (PC4) connected to **HV2**.
 
