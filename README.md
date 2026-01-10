@@ -4,7 +4,8 @@
 This repository demonstrates a bare-metal C implementation of I2C communication between an STM32 Nucleo-C031C6 (Controller) and Arduino Uno (Peripheral). The Nucleo sends the Arduino a number, and in response, the Arduino returns the number multiplied by 10 if it's between 1 and 4. Otherwise, it just sends a default value. For the Nucleo, STM32's CubeMX is used to configure SWD/debug and clock initialization. All timer, USART, and I2C manipulation are performed via direct memory-mapped register access. Similarly for the Arduino, all I2C parameters are configured using direct memory-mapped register access. The Arduino library is only used to initialize and utilize the serial port.
 
 ### Wiring
-<img width="2020" height="1132" alt="Nucleo to Arduino I2C" src="https://github.com/user-attachments/assets/0dfc3a07-6a26-4b0c-b602-a3f4494f50fd" />
+<img width="2020" height="1132" alt="Nucleo to Arduino I2C" src="https://github.com/user-attachments/assets/97d13960-10e9-412d-a360-6acb4f607762" />
+
 
 ---
 
