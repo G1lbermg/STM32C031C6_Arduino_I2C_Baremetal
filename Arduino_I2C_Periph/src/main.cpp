@@ -115,7 +115,7 @@ void readStatusCode(void)
          break;
       case R_DATA_NACK:
       case R_GCALL_DATA_NACK:
-         ack(); //send nack
+         ack();
          break;
       case R_STOP:
          ack(); 
@@ -129,17 +129,16 @@ void readStatusCode(void)
          nack();
          break;
       case T_DATA_ACK:
-         ack();
-        // nack();
+         nack();
          break;
       case T_DATA_NACK:
-         //nack();
          ack();
          break;
       case T_DONE_ACK :
          ack();
          break;
       default:
+         ack();
          break;
   }
 }
