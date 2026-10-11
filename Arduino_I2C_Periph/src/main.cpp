@@ -10,7 +10,7 @@ void readStatusCode(void);
 void ack(void);
 void nack(void);
 void readBus(void);
-void transmitBus(uint8_t data);
+void transmitBus(void);
 
 
 volatile uint8_t newCommandFlag = 0U;
